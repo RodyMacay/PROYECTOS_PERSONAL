@@ -1,0 +1,193 @@
+Paso 1: Crea un nuevo proyecto de React utilizando Create React App, si aún no lo has hecho:
+
+bash
+Copy code
+npx create-react-app juego-del-21
+cd juego-del-21
+Paso 2: Instala axios, una librería para hacer peticiones HTTP, utilizando npm:
+
+bash
+Copy code
+npm install axios
+Paso 3: Crea una carpeta llamada api en el directorio src, y dentro de esta carpeta crea un archivo llamado deck.js con el siguiente contenido:
+
+javascript
+Copy code
+import axios from "axios";
+
+const BASE_URL = "https://deckofcardsapi.com/api/deck";
+
+export const createNewDeck = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/new/shuffle/?deck_count=1`);
+    return response.data;
+  } catch (error) {
+    throw new Error("Error creating new deck.");
+  }
+};
+
+export const drawCard = async (deckId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/${deckId}/draw/?count=1`);
+    return response.data.cards[0];
+  } catch (error) {
+    throw new Error("Error drawing card.");
+  }
+};
+Paso 4: Reemplaza el contenido del archivo src/App.js con el siguiente código:
+
+jsx
+Copy code
+import React, { useState, useEffect } from "react";
+import "./App.css";
+import { createNewDeck, drawCard } from "./api/deck";
+
+function App() {
+  const [deckId, setDeckId] = useState("");
+  const [playerScore, setPlayerScore] = useState(0);
+  const [computerScore, setComputerScore] = useState(0);
+  const [currentRoundScore, setCurrentRoundScore] = useState(0);
+
+  useEffect(() => {
+    async function setupGame() {
+      try {
+        const newDeck = await createNewDeck();
+        setDeckId(newDeck.deck_id);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
+    setupGame();
+  }, []);
+
+  const handleDrawCard = async () => {
+    try {
+      const card = await drawCard(deckId);
+
+      const cardValue = getCardValue(card.value);
+      setCurrentRoundScore(currentRoundScore + cardValue);
+
+      if (currentRoundScore + cardValue > 21) {
+        handleEndRound();
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  const handleEndRound = () => {
+    setPlayerScore(playerScore + currentRoundScore);
+    setCurrentRoundScore(0);
+  };
+
+  const handleReset = () => {
+    setPlayerScore(0);
+    setComputerScore(0);
+    setCurrentRoundScore(0);
+    createNewDeck().then((newDeck) => setDeckId(newDeck.deck_id));
+  };
+
+  const getCardValue = (cardValue) => {
+    switch (cardValue) {
+      case "KING":
+      case "QUEEN":
+      case "JACK":
+        return 10;
+      case "ACE":
+        return 11;
+      default:
+        return parseInt(cardValue);
+    }
+  };
+
+  return (
+    <div className="App">
+      <h1>Juego del 21</h1>
+      <div>
+        <h2>Tu puntuación: {playerScore}</h2>
+        <h2>Puntuación de la computadora: {computerScore}</h2>
+        <h3>Puntuación de la ronda actual: {currentRoundScore}</h3>
+        <button onClick={handleDrawCard}>Tomar carta</button>
+        <button onClick={handleEndRound}>Finalizar ronda</button>
+        <button onClick={handleReset}>Reiniciar juego</button>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+Paso 5: Ejecuta la aplicación:
+
+bash
+Copy code
+npm start
+
+function App() {
+  // ... (código anterior)
+
+  // Función para empezar el juego, repartiendo dos cartas al jugador y a la computadora.
+  const empezarJuego = async () => {
+    // Limpia el estado de cartas del jugador antes de empezar una nueva partida.
+    setCartasJugador([]);
+
+    // Repartir dos cartas al jugador
+    for (let i = 0; i < 2; i++) {
+      try {
+        const carta = await elegirCarta(idBaraja);
+        const valorCarta = obtenerValorCarta(carta.value);
+        setPuntuacionRondaActual(puntuacionRondaActual + valorCarta);
+        setCartasJugador((prevCartasJugador) => [...prevCartasJugador, carta.image]);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
+    // Repartir dos cartas a la computadora
+    for (let i = 0; i < 2; i++) {
+      try {
+        const carta = await elegirCarta(idBaraja);
+        const valorCarta = obtenerValorCarta(carta.value);
+        setPuntuacionComputadora(puntuacionComputadora + valorCarta);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+  };
+
+  // ... (código restante)
+}
+
+ // useEffect para que la computadora tome cartas automáticamente cuando su puntuación sea menor a 17.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (puntuacionComputadora < 17 && puntuacionJugador !== 0) {
+        tomarCartaComputadora();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [puntuacionComputadora, puntuacionJugador]);
+
+  // Función para que la computadora tome una carta automáticamente.
+  const tomarCartaComputadora = async () => {
+    try {
+      // Elegimos una carta de la baraja utilizando su ID.
+      const carta = await elegirCarta(idBaraja);
+
+      // Obtenemos el valor de la carta (su valor en puntos).
+      const valorCarta = obtenerValorCarta(carta.value);
+
+      // Actualizamos la puntuación de la computadora sumando el valor de la carta.
+      setPuntuacionComputadora(puntuacionComputadora + valorCarta);
+
+      // Si la puntuación de la computadora supera 21, finalizamos la ronda.
+      if (puntuacionComputadora + valorCarta > 21) {
+        finalizarRonda();
+      } else{
+        setCartasComputadora([...cartasComputadora, carta.image])
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
