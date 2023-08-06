@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://tu-usuario-de-github.github.io/nombre-del-repositorio",
+  "homepage": "https://github.com/RodyMacay/PROYECTOS_PERSONAL.git",
 
   "scripts": {
     "deploy": "gh-pages -d build",
